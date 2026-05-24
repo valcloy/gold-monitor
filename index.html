@@ -586,24 +586,7 @@
   <!-- STATUS BANNER -->
   <div class="status-banner" id="statusBanner"></div>
 
-  <!-- BRAND PRICES (paling atas) -->
-  <div class="brands-section">
-    <div class="brands-header">
-      <div>
-        <div class="brands-title">Harga Produk Emas Indonesia</div>
-        <div class="brands-subtitle">Estimasi berdasarkan harga spot emas internasional · Klik nama brand untuk harga resmi</div>
-      </div>
-    </div>
-    <div class="brand-grid" id="brandGrid">
-      <div style="color:var(--text-dim);font-size:.8rem;padding:12px">Memuat harga produk...</div>
-    </div>
-    <div class="brands-note">
-      * Harga estimasi, belum termasuk biaya pengiriman &amp; asuransi. Harga resmi dapat berbeda.
-      Cek harga aktual di situs masing-masing brand.
-    </div>
-  </div>
-
-  <!-- CHART -->
+  <!-- 1. GRAFIK -->
   <div class="chart-card">
     <div class="chart-header">
       <div class="chart-title">Grafik Harga Emas (XAU/USD)</div>
@@ -618,7 +601,17 @@
     </div>
   </div>
 
-  <!-- PRICE CARDS -->
+  <!-- 2. PRODUK EMAS INDONESIA (tanpa judul) -->
+  <div class="brands-section">
+    <div class="brand-grid" id="brandGrid">
+      <div style="color:var(--text-dim);font-size:.8rem;padding:12px">Memuat harga produk...</div>
+    </div>
+    <div class="brands-note">
+      * Estimasi berdasarkan harga spot · Harga resmi dapat berbeda
+    </div>
+  </div>
+
+  <!-- 3. HARGA EMAS USD & IDR -->
   <div class="price-grid">
     <div class="price-card primary">
       <div class="card-label">Harga Emas (XAU/USD)</div>
@@ -643,12 +636,9 @@
     </div>
   </div>
 
-  <!-- CONVERTER + ALERT -->
+  <!-- 4. FITUR LAIN (tanpa judul) -->
   <div class="bottom-grid">
-
-    <!-- CONVERTER -->
     <div class="converter-card">
-      <div class="section-title">Konverter Emas</div>
       <div class="input-group">
         <label>Jumlah</label>
         <input type="number" id="convAmount" value="1" min="0" step="0.1" oninput="runConverter()" />
@@ -672,25 +662,19 @@
       </div>
     </div>
 
-    <!-- ALERT -->
     <div class="alert-card">
-      <div class="section-title">Notifikasi Harga</div>
-      <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:12px">
-        Dapatkan notifikasi browser saat harga emas mencapai target (XAU/USD).
-      </div>
       <div class="alert-row">
-        <input type="number" id="alertPrice" placeholder="Contoh: 3200" min="0" />
+        <input type="number" id="alertPrice" placeholder="Target harga (XAU/USD)" min="0" />
         <select id="alertDir" style="width:auto;flex:none">
           <option value="above">↑ Naik ke</option>
           <option value="below">↓ Turun ke</option>
         </select>
-        <button class="btn-add-alert" onclick="addAlert()">+ Tambah</button>
+        <button class="btn-add-alert" onclick="addAlert()">+ Alert</button>
       </div>
       <div class="alert-list" id="alertList">
         <div class="no-alerts">Belum ada alert. Tambahkan di atas.</div>
       </div>
     </div>
-
   </div>
 
 </main>
@@ -872,11 +856,7 @@ function renderBrandCards(pricePerGramIdr) {
     return `
       <div class="brand-card">
         <div class="brand-card-header">
-          <div class="brand-logo" style="background:${brand.color}">${brand.short}</div>
-          <div>
-            <a href="${brand.url}" target="_blank" rel="noopener" class="brand-name-link">${brand.name}</a>
-            <div class="brand-desc">${brand.desc}</div>
-          </div>
+          <a href="${brand.url}" target="_blank" rel="noopener" class="brand-name-link">${brand.name}</a>
         </div>
         <table class="brand-table">
           <thead><tr><th>Berat</th><th>Estimasi Harga</th></tr></thead>
