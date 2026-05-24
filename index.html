@@ -608,64 +608,50 @@ let state = {
   chartData: {},
 };
 
-// ─── FETCH: current gold price ───────────────────────────────────────────────
+// ─── FETCH: current gold price (free, no API key needed) ────────────────────
 async function fetchGoldPrice() {
-  const key = getApiKey();
-  if (!key) return null;
-
-  const url = `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=XAU&to_currency=USD&apikey=${key}`;
-  const res = await fetch(url);
+  // Uses fawazahmed0 currency API via jsDelivr CDN — CORS enabled, no key needed
+  const res = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json');
+  if (!res.ok) throw new Error('Gagal mengambil harga emas');
   const data = await res.json();
-
-  if (data['Realtime Currency Exchange Rate']) {
-    const info = data['Realtime Currency Exchange Rate'];
-    return {
-      price: parseFloat(info['5. Exchange Rate']),
-      bidPrice: parseFloat(info['8. Bid Price']),
-      askPrice: parseFloat(info['9. Ask Price']),
-    };
-  }
-  throw new Error(data['Note'] || data['Information'] || 'Gagal mengambil data harga');
+  return {
+    price: data.xau.usd,           // gold per troy oz in USD
+    priceIdr: data.xau.idr,        // gold per troy oz in IDR
+    usdIdr: data.xau.idr / data.xau.usd,  // USD/IDR rate
+  };
 }
 
-// ─── FETCH: historical XAU/USD ───────────────────────────────────────────────
+// ─── FETCH: historical XAU/USD via GLD ETF proxy ────────────────────────────
 async function fetchHistorical(range) {
-  if (state.chartData[range]) return state.chartData[range]; // cache
+  if (state.chartData[range]) return state.chartData[range];
 
   const key = getApiKey();
-  if (!key) return null;
-
   const outputSize = range <= 30 ? 'compact' : 'full';
-  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=XAU&to_symbol=USD&outputsize=${outputSize}&apikey=${key}`;
+  // GLD ETF tracks gold price closely; free tier supports TIME_SERIES_DAILY for stocks
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=GLD&outputsize=${outputSize}&apikey=${key}`;
   const res = await fetch(url);
   const data = await res.json();
 
-  const series = data['Time Series FX (Daily)'];
-  if (!series) throw new Error(data['Note'] || data['Information'] || 'Gagal mengambil histori');
+  const series = data['Time Series (Daily)'];
+  if (!series) throw new Error(data['Note'] || data['Information'] || 'Grafik tidak tersedia (coba lagi besok)');
 
-  const entries = Object.entries(series)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-range);
+  const allEntries = Object.entries(series).sort(([a], [b]) => a.localeCompare(b));
+  const entries = allEntries.slice(-range);
+
+  // Dynamic ratio: convert GLD price → gold oz price using latest known gold/GLD ratio
+  const latestGldPrice = parseFloat(allEntries[allEntries.length - 1][1]['4. close']);
+  const ratio = state.priceUsd ? state.priceUsd / latestGldPrice : 10.89;
 
   const labels = entries.map(([d]) => {
     const dt = new Date(d);
     return dt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
   });
-  const prices = entries.map(([, v]) => parseFloat(v['4. close']));
+  const prices = entries.map(([, v]) => parseFloat(v['4. close']) * ratio);
 
-  // save prev close for change %
   if (prices.length >= 2) state.prevClose = prices[prices.length - 2];
 
   state.chartData[range] = { labels, prices };
   return state.chartData[range];
-}
-
-// ─── FETCH: USD/IDR ──────────────────────────────────────────────────────────
-async function fetchUsdIdr() {
-  const res = await fetch('https://open.er-api.com/v6/latest/USD');
-  const data = await res.json();
-  if (data.rates && data.rates.IDR) return data.rates.IDR;
-  throw new Error('Gagal mengambil kurs IDR');
 }
 
 // ─── UPDATE UI ───────────────────────────────────────────────────────────────
@@ -913,13 +899,10 @@ async function refresh() {
   hideBanner();
 
   try {
-    const [goldData, idr] = await Promise.all([
-      fetchGoldPrice(),
-      fetchUsdIdr(),
-    ]);
+    const goldData = await fetchGoldPrice();
 
-    if (goldData) state.priceUsd = goldData.price;
-    state.usdIdr = idr;
+    state.priceUsd = goldData.price;
+    state.usdIdr = goldData.usdIdr;
 
     updatePriceCards();
     updateConverter();
