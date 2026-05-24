@@ -586,6 +586,38 @@
   <!-- STATUS BANNER -->
   <div class="status-banner" id="statusBanner"></div>
 
+  <!-- BRAND PRICES (paling atas) -->
+  <div class="brands-section">
+    <div class="brands-header">
+      <div>
+        <div class="brands-title">Harga Produk Emas Indonesia</div>
+        <div class="brands-subtitle">Estimasi berdasarkan harga spot emas internasional · Klik nama brand untuk harga resmi</div>
+      </div>
+    </div>
+    <div class="brand-grid" id="brandGrid">
+      <div style="color:var(--text-dim);font-size:.8rem;padding:12px">Memuat harga produk...</div>
+    </div>
+    <div class="brands-note">
+      * Harga estimasi, belum termasuk biaya pengiriman &amp; asuransi. Harga resmi dapat berbeda.
+      Cek harga aktual di situs masing-masing brand.
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-title">Grafik Harga Emas (XAU/USD)</div>
+      <div class="tab-group">
+        <button class="tab active" data-range="7">7H</button>
+        <button class="tab" data-range="30">1B</button>
+        <button class="tab" data-range="90">3B</button>
+      </div>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="goldChart"></canvas>
+    </div>
+  </div>
+
   <!-- PRICE CARDS -->
   <div class="price-grid">
     <div class="price-card primary">
@@ -608,38 +640,6 @@
       <div class="card-label">Harga per Gram (IDR)</div>
       <div class="card-value" id="priceGramIdr" style="font-size:1.4rem">–</div>
       <div class="card-sub">1 troy oz = 31.1035 gram</div>
-    </div>
-  </div>
-
-  <!-- CHART -->
-  <div class="chart-card">
-    <div class="chart-header">
-      <div class="chart-title">Grafik Harga Emas (XAU/USD)</div>
-      <div class="tab-group">
-        <button class="tab active" data-range="7">7H</button>
-        <button class="tab" data-range="30">1B</button>
-        <button class="tab" data-range="90">3B</button>
-      </div>
-    </div>
-    <div class="chart-wrapper">
-      <canvas id="goldChart"></canvas>
-    </div>
-  </div>
-
-  <!-- BRAND PRICES -->
-  <div class="brands-section">
-    <div class="brands-header">
-      <div>
-        <div class="brands-title">Harga Produk Emas Indonesia</div>
-        <div class="brands-subtitle">Estimasi berdasarkan harga spot emas internasional · Klik nama brand untuk harga resmi</div>
-      </div>
-    </div>
-    <div class="brand-grid" id="brandGrid">
-      <div style="color:var(--text-dim);font-size:.8rem;padding:12px">Memuat harga produk...</div>
-    </div>
-    <div class="brands-note">
-      * Harga estimasi, belum termasuk biaya pengiriman & asuransi. Harga resmi dapat berbeda.
-      Cek harga aktual di situs masing-masing brand.
     </div>
   </div>
 
@@ -737,7 +737,7 @@ const BRANDS = [
   },
   {
     id: 'galeri24', name: 'Galeri 24', short: 'G24',
-    desc: 'Jaringan resmi PT Antam', url: 'https://www.galeri24.co.id',
+    desc: 'PT Galeri 24 Mas (anak usaha PT Antam)', url: 'https://www.galeri24.co.id',
     color: '#b8860b', logoUrl: 'https://www.google.com/s2/favicons?domain=galeri24.co.id&sz=64',
     weights: [1, 2, 5, 10, 25, 50, 100],
     premium: { 1:0.12, 2:0.09, 5:0.06, 10:0.05, 25:0.035, 50:0.03, 100:0.022 },
@@ -872,13 +872,7 @@ function renderBrandCards(pricePerGramIdr) {
     return `
       <div class="brand-card">
         <div class="brand-card-header">
-          <div class="brand-logo" style="background:${brand.color}">
-            <img src="${brand.logoUrl}" width="32" height="32"
-              style="border-radius:6px;object-fit:contain"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
-              alt="${brand.short}" />
-            <span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800">${brand.short}</span>
-          </div>
+          <div class="brand-logo" style="background:${brand.color}">${brand.short}</div>
           <div>
             <a href="${brand.url}" target="_blank" rel="noopener" class="brand-name-link">${brand.name}</a>
             <div class="brand-desc">${brand.desc}</div>
