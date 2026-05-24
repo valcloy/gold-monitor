@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pemantauan Harga Emas Live</title>
+  <title>Gold Watch Indonesia – Harga Emas Live</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
@@ -204,6 +204,127 @@
     }
 
     .chart-wrapper { position: relative; height: 280px; }
+
+    /* ── BRAND SECTION ── */
+    .brands-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .brands-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .brands-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .brands-subtitle {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .brand-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .brand-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+
+    .brand-card:hover { border-color: var(--gold-dim); }
+
+    .brand-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: .02em;
+      flex-shrink: 0;
+      color: white;
+    }
+
+    .brand-name-link {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .brand-name-link:hover { color: var(--gold); }
+
+    .brand-desc {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .brand-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+
+    .brand-table th {
+      padding: 7px 14px;
+      text-align: left;
+      color: var(--text-dim);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand-table td {
+      padding: 7px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+
+    .brand-table tr:last-child td { border-bottom: none; }
+
+    .brand-table td:last-child {
+      text-align: right;
+      font-weight: 600;
+      color: var(--gold);
+      font-size: 0.8rem;
+    }
+
+    .brands-note {
+      margin-top: 14px;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .brands-note a { color: var(--gold); }
 
     /* ── BOTTOM GRID ── */
     .bottom-grid {
@@ -446,11 +567,17 @@
 <!-- HEADER -->
 <header>
   <div class="logo">
-    <svg viewBox="0 0 28 28" fill="none">
-      <circle cx="14" cy="14" r="13" stroke="#f5c842" stroke-width="1.5"/>
-      <text x="14" y="19" text-anchor="middle" fill="#f5c842" font-size="13" font-weight="bold" font-family="serif">Au</text>
+    <svg viewBox="0 0 48 28" fill="none" style="width:48px;height:28px">
+      <!-- Gold bar -->
+      <rect x="1" y="7" width="26" height="14" rx="3" fill="#f5c842" stroke="#d4a017" stroke-width="1.2"/>
+      <rect x="3.5" y="9.5" width="21" height="9" rx="2" fill="#ffd95a"/>
+      <text x="14" y="16" text-anchor="middle" fill="#7a3e00" font-size="5.5" font-weight="bold" font-family="serif">EMAS</text>
+      <!-- Indonesia flag -->
+      <rect x="30" y="6" width="17" height="8" rx="1.5" fill="#CE1126"/>
+      <rect x="30" y="14" width="17" height="8" rx="0" fill="#f8f8f8"/>
+      <rect x="30" y="6" width="17" height="16" rx="1.5" fill="none" stroke="#555" stroke-width="0.6"/>
     </svg>
-    GoldWatch
+    Gold Watch Indonesia
   </div>
   <div class="header-right">
     <span class="last-update" id="lastUpdate">Memuat data...</span>
@@ -501,6 +628,23 @@
     </div>
     <div class="chart-wrapper">
       <canvas id="goldChart"></canvas>
+    </div>
+  </div>
+
+  <!-- BRAND PRICES -->
+  <div class="brands-section">
+    <div class="brands-header">
+      <div>
+        <div class="brands-title">Harga Produk Emas Indonesia</div>
+        <div class="brands-subtitle">Estimasi berdasarkan harga spot emas internasional · Klik nama brand untuk harga resmi</div>
+      </div>
+    </div>
+    <div class="brand-grid" id="brandGrid">
+      <div style="color:var(--text-dim);font-size:.8rem;padding:12px">Memuat harga produk...</div>
+    </div>
+    <div class="brands-note">
+      * Harga estimasi, belum termasuk biaya pengiriman & asuransi. Harga resmi dapat berbeda.
+      Cek harga aktual di situs masing-masing brand.
     </div>
   </div>
 
@@ -557,9 +701,9 @@
 </main>
 
 <footer>
-  Data: <strong>Alpha Vantage</strong> (harga emas) &amp; <strong>Open.er-api.com</strong> (kurs) &nbsp;·&nbsp;
+  Data: <strong>fawazahmed0 API</strong> (harga emas) &amp; <strong>Alpha Vantage</strong> (grafik GLD ETF) &nbsp;·&nbsp;
   Diperbarui setiap 60 menit &nbsp;·&nbsp;
-  <span style="color:var(--gold)">GoldWatch</span>
+  <span style="color:var(--gold)">Gold Watch Indonesia</span>
 </footer>
 
 <!-- SETTINGS MODAL -->
@@ -587,6 +731,38 @@
 </div>
 
 <script>
+// ─── BRAND DATA ──────────────────────────────────────────────────────────────
+const BRANDS = [
+  {
+    id: 'antam', name: 'Antam Logam Mulia', short: 'LM',
+    desc: 'PT Aneka Tambang Tbk', url: 'https://www.logammulia.com',
+    color: '#1a56a0', logoUrl: 'https://www.logammulia.com/favicon.ico',
+    weights: [0.5, 1, 2, 5, 10, 25, 50, 100],
+    premium: { 0.5:0.20, 1:0.11, 2:0.08, 5:0.055, 10:0.045, 25:0.03, 50:0.025, 100:0.02 },
+  },
+  {
+    id: 'galeri24', name: 'Galeri 24', short: 'G24',
+    desc: 'Jaringan resmi PT Antam', url: 'https://www.galeri24.co.id',
+    color: '#b8860b', logoUrl: 'https://www.galeri24.co.id/favicon.ico',
+    weights: [1, 2, 5, 10, 25, 50, 100],
+    premium: { 1:0.12, 2:0.09, 5:0.06, 10:0.05, 25:0.035, 50:0.03, 100:0.022 },
+  },
+  {
+    id: 'ubs', name: 'UBS Gold', short: 'UBS',
+    desc: 'PT Untung Bersama Sejahtera', url: 'https://www.ubsgold.co.id',
+    color: '#1a3a5c', logoUrl: 'https://www.ubsgold.co.id/favicon.ico',
+    weights: [1, 2, 5, 10, 25, 50, 100],
+    premium: { 1:0.09, 2:0.065, 5:0.05, 10:0.04, 25:0.028, 50:0.022, 100:0.018 },
+  },
+  {
+    id: 'hartadinata', name: 'Hartadinata Abadi', short: 'HD',
+    desc: 'PT Hartadinata Abadi Tbk', url: 'https://www.hartadinata.com',
+    color: '#7b2d00', logoUrl: 'https://www.hartadinata.com/favicon.ico',
+    weights: [1, 2, 5, 10, 25, 50, 100],
+    premium: { 1:0.10, 2:0.07, 5:0.052, 10:0.042, 25:0.03, 50:0.024, 100:0.019 },
+  },
+];
+
 // ─── CONFIG ─────────────────────────────────────────────────────────────────
 const TROY_OZ_TO_GRAM = 31.1035;
 const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 jam
@@ -675,6 +851,7 @@ function updatePriceCards() {
   document.getElementById('priceGramIdr').textContent = fmtIdr(priceGramIdr);
   document.getElementById('usdIdr').textContent = fmtIdr(usdIdr);
   document.getElementById('pricePerGram').textContent = `per troy ounce · Rp${Math.round(priceGramIdr).toLocaleString('id-ID')}/gram`;
+  renderBrandCards(priceGramIdr);
 
   // change badge
   if (prevClose) {
@@ -685,6 +862,39 @@ function updatePriceCards() {
     document.getElementById('changeUsd').innerHTML =
       `<span class="change-badge ${dir}">${arrow} ${fmtUsd(Math.abs(abs))} (${Math.abs(pct).toFixed(2)}%) dari kemarin</span>`;
   }
+}
+
+function renderBrandCards(pricePerGramIdr) {
+  const grid = document.getElementById('brandGrid');
+  grid.innerHTML = BRANDS.map(brand => {
+    const rows = brand.weights.map(w => {
+      const prem = brand.premium[w] ?? 0.05;
+      const total = pricePerGramIdr * w * (1 + prem);
+      const label = w < 1 ? `${w * 1000} mg` : `${w} gram`;
+      return `<tr><td>${label}</td><td>${fmtIdr(total)}</td></tr>`;
+    }).join('');
+
+    return `
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <div class="brand-logo" style="background:${brand.color}">
+            <img src="${brand.logoUrl}" width="32" height="32"
+              style="border-radius:6px;object-fit:contain"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+              alt="${brand.short}" />
+            <span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800">${brand.short}</span>
+          </div>
+          <div>
+            <a href="${brand.url}" target="_blank" rel="noopener" class="brand-name-link">${brand.name}</a>
+            <div class="brand-desc">${brand.desc}</div>
+          </div>
+        </div>
+        <table class="brand-table">
+          <thead><tr><th>Berat</th><th>Estimasi Harga</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }).join('');
 }
 
 function updateConverter() {
@@ -848,7 +1058,7 @@ function checkAlerts(currentPrice) {
       a.triggered = true;
       saveAlerts();
       if (Notification.permission === 'granted') {
-        new Notification('🥇 GoldWatch Alert!', {
+        new Notification('🥇 Gold Watch Indonesia Alert!', {
           body: `Harga emas telah ${a.dir === 'above' ? 'naik ke' : 'turun ke'} ${fmtUsd(currentPrice)}`,
           icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🥇</text></svg>'
         });
