@@ -591,8 +591,10 @@
 const TROY_OZ_TO_GRAM = 31.1035;
 const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 jam
 
+const DEFAULT_API_KEY = 'ZZEH4MKVLY6K68R9';
+
 function getApiKey() {
-  return localStorage.getItem('av_api_key') || '';
+  return localStorage.getItem('av_api_key') || DEFAULT_API_KEY;
 }
 
 // ─── STATE ──────────────────────────────────────────────────────────────────
@@ -910,13 +912,6 @@ async function refresh() {
   btn.innerHTML = '<span class="spin">⟳</span> Memuat...';
   hideBanner();
 
-  if (!getApiKey()) {
-    showBanner('warn', '⚠ API key belum diatur. Klik ⚙ untuk memasukkan API key Alpha Vantage gratis.');
-    btn.classList.remove('loading');
-    btn.textContent = '⟳ Perbarui';
-    return;
-  }
-
   try {
     const [goldData, idr] = await Promise.all([
       fetchGoldPrice(),
@@ -948,11 +943,6 @@ async function refresh() {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 function init() {
   renderAlerts();
-
-  if (!getApiKey()) {
-    showBanner('warn', '⚠ API key belum diatur. Klik ⚙ di kanan atas untuk memasukkan API key Alpha Vantage (gratis).');
-    return;
-  }
 
   refresh();
   setInterval(refresh, REFRESH_INTERVAL_MS);
