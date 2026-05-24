@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pemantauan Harga Emas Live</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --gold: #f5c842;
+      --gold-dark: #d4a017;
+      --gold-dim: #7a5c00;
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --text-dim: #888;
+      --green: #22c55e;
+      --red: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .logo svg { width: 28px; height: 28px; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .last-update {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .btn-refresh {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all .2s;
+    }
+    .btn-refresh:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-refresh.loading { opacity: .5; pointer-events: none; }
+
+    .btn-settings {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all .2s;
+    }
+    .btn-settings:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px;
+      display: grid;
+      gap: 20px;
+    }
+
+    /* ── PRICE CARDS ── */
+    .price-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .price-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+    }
+
+    .price-card.primary { border-color: var(--gold-dim); }
+    .price-card.primary::before { background: linear-gradient(90deg, var(--gold), var(--gold-dark)); }
+
+    .card-label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .card-sub { font-size: 0.78rem; color: var(--text-dim); }
+
+    .change-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      margin-top: 8px;
+    }
+
+    .change-badge.up { background: rgba(34,197,94,.15); color: var(--green); }
+    .change-badge.down { background: rgba(239,68,68,.15); color: var(--red); }
+    .change-badge.flat { background: rgba(136,136,136,.15); color: var(--text-dim); }
+
+    /* ── CHART ── */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chart-title { font-size: 0.9rem; font-weight: 600; }
+
+    .tab-group {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 8px;
+    }
+
+    .tab {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      padding: 5px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+      transition: all .2s;
+    }
+
+    .tab.active {
+      background: var(--surface2);
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .chart-wrapper { position: relative; height: 280px; }
+
+    /* ── BOTTOM GRID ── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 640px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+    /* ── CONVERTER ── */
+    .converter-card, .alert-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 16px;
+    }
+
+    .input-group { margin-bottom: 14px; }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    input[type="number"], input[type="text"], select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border .2s;
+    }
+
+    input:focus, select:focus { border-color: var(--gold-dim); }
+
+    .convert-result {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.9rem;
+    }
+
+    .convert-result .res-label { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 4px; }
+    .convert-result .res-val { font-size: 1.2rem; font-weight: 700; color: var(--gold); }
+
+    /* ── ALERT / NOTIFICATION ── */
+    .alert-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .alert-row input { flex: 1; }
+
+    .btn-add-alert {
+      background: var(--gold);
+      border: none;
+      color: #000;
+      padding: 0 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.85rem;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background .2s;
+    }
+    .btn-add-alert:hover { background: var(--gold-dark); }
+
+    .alert-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .alert-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+    }
+
+    .alert-item .alert-info { display: flex; align-items: center; gap: 8px; }
+    .alert-item .alert-dir { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
+    .alert-item .alert-dir.above { background: rgba(34,197,94,.15); color: var(--green); }
+    .alert-item .alert-dir.below { background: rgba(239,68,68,.15); color: var(--red); }
+
+    .btn-del-alert {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color .2s;
+    }
+    .btn-del-alert:hover { color: var(--red); }
+
+    .no-alerts { font-size: 0.8rem; color: var(--text-dim); text-align: center; padding: 12px; }
+
+    /* ── MODAL (API KEY SETTINGS) ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 440px;
+      width: calc(100% - 32px);
+    }
+
+    .modal h2 { font-size: 1.1rem; margin-bottom: 8px; }
+
+    .modal p { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+
+    .modal p a { color: var(--gold); }
+
+    .modal-footer {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .btn-cancel {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 9px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+    }
+
+    .btn-save {
+      background: var(--gold);
+      border: none;
+      color: #000;
+      padding: 9px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-family: inherit;
+      font-size: 0.85rem;
+    }
+
+    .api-hint {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+
+    .api-hint strong { color: var(--text); }
+
+    /* ── STATUS BANNER ── */
+    .status-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+    }
+
+    .status-banner.warn {
+      display: flex;
+      background: rgba(245,200,66,.1);
+      border: 1px solid rgba(245,200,66,.3);
+      color: var(--gold);
+    }
+
+    .status-banner.error {
+      display: flex;
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      color: var(--red);
+    }
+
+    /* ── SKELETON ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+    .spin { animation: spin .8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="13" stroke="#f5c842" stroke-width="1.5"/>
+      <text x="14" y="19" text-anchor="middle" fill="#f5c842" font-size="13" font-weight="bold" font-family="serif">Au</text>
+    </svg>
+    GoldWatch
+  </div>
+  <div class="header-right">
+    <span class="last-update" id="lastUpdate">Memuat data...</span>
+    <button class="btn-refresh" id="btnRefresh" onclick="refresh()">⟳ Perbarui</button>
+    <button class="btn-settings" onclick="openSettings()" title="Pengaturan API Key">⚙</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- STATUS BANNER -->
+  <div class="status-banner" id="statusBanner"></div>
+
+  <!-- PRICE CARDS -->
+  <div class="price-grid">
+    <div class="price-card primary">
+      <div class="card-label">Harga Emas (XAU/USD)</div>
+      <div class="card-value" id="priceUsd">–</div>
+      <div class="card-sub">per troy ounce</div>
+      <div id="changeUsd"></div>
+    </div>
+    <div class="price-card">
+      <div class="card-label">Harga Emas (XAU/IDR)</div>
+      <div class="card-value" id="priceIdr">–</div>
+      <div class="card-sub" id="pricePerGram">per troy ounce</div>
+    </div>
+    <div class="price-card">
+      <div class="card-label">Kurs USD/IDR</div>
+      <div class="card-value" id="usdIdr" style="font-size:1.4rem">–</div>
+      <div class="card-sub">live rate</div>
+    </div>
+    <div class="price-card">
+      <div class="card-label">Harga per Gram (IDR)</div>
+      <div class="card-value" id="priceGramIdr" style="font-size:1.4rem">–</div>
+      <div class="card-sub">1 troy oz = 31.1035 gram</div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-title">Grafik Harga Emas (XAU/USD)</div>
+      <div class="tab-group">
+        <button class="tab active" data-range="7">7H</button>
+        <button class="tab" data-range="30">1B</button>
+        <button class="tab" data-range="90">3B</button>
+      </div>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="goldChart"></canvas>
+    </div>
+  </div>
+
+  <!-- CONVERTER + ALERT -->
+  <div class="bottom-grid">
+
+    <!-- CONVERTER -->
+    <div class="converter-card">
+      <div class="section-title">Konverter Emas</div>
+      <div class="input-group">
+        <label>Jumlah</label>
+        <input type="number" id="convAmount" value="1" min="0" step="0.1" oninput="runConverter()" />
+      </div>
+      <div class="input-group">
+        <label>Satuan</label>
+        <select id="convUnit" onchange="runConverter()">
+          <option value="gram">Gram</option>
+          <option value="oz">Troy Ounce</option>
+          <option value="tola">Tola (11.664 g)</option>
+          <option value="kg">Kilogram</option>
+        </select>
+      </div>
+      <div class="convert-result" style="margin-bottom:10px">
+        <div class="res-label">Nilai dalam USD</div>
+        <div class="res-val" id="resUsd">–</div>
+      </div>
+      <div class="convert-result">
+        <div class="res-label">Nilai dalam IDR</div>
+        <div class="res-val" id="resIdr">–</div>
+      </div>
+    </div>
+
+    <!-- ALERT -->
+    <div class="alert-card">
+      <div class="section-title">Notifikasi Harga</div>
+      <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:12px">
+        Dapatkan notifikasi browser saat harga emas mencapai target (XAU/USD).
+      </div>
+      <div class="alert-row">
+        <input type="number" id="alertPrice" placeholder="Contoh: 3200" min="0" />
+        <select id="alertDir" style="width:auto;flex:none">
+          <option value="above">↑ Naik ke</option>
+          <option value="below">↓ Turun ke</option>
+        </select>
+        <button class="btn-add-alert" onclick="addAlert()">+ Tambah</button>
+      </div>
+      <div class="alert-list" id="alertList">
+        <div class="no-alerts">Belum ada alert. Tambahkan di atas.</div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<footer>
+  Data: <strong>Alpha Vantage</strong> (harga emas) &amp; <strong>Open.er-api.com</strong> (kurs) &nbsp;·&nbsp;
+  Diperbarui setiap 60 menit &nbsp;·&nbsp;
+  <span style="color:var(--gold)">GoldWatch</span>
+</footer>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h2>⚙ Pengaturan API Key</h2>
+    <p>Website ini menggunakan <strong>Alpha Vantage</strong> untuk data harga emas real-time.</p>
+    <div class="api-hint">
+      <strong>Cara mendapatkan API key gratis:</strong><br>
+      1. Kunjungi <a href="https://www.alphavantage.co/support/#api-key" target="_blank">alphavantage.co</a><br>
+      2. Daftar gratis dengan email<br>
+      3. Copy API key yang dikirim ke email<br>
+      4. Paste di bawah ini &amp; klik Simpan<br><br>
+      <strong>Batas gratis:</strong> 25 request/hari (cukup untuk refresh tiap jam).
+    </div>
+    <div class="input-group">
+      <label>Alpha Vantage API Key</label>
+      <input type="text" id="apiKeyInput" placeholder="Contoh: ABCDEFGHIJ123456" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeSettings()">Batal</button>
+      <button class="btn-save" onclick="saveSettings()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ─────────────────────────────────────────────────────────────────
+const TROY_OZ_TO_GRAM = 31.1035;
+const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 jam
+
+function getApiKey() {
+  return localStorage.getItem('av_api_key') || '';
+}
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let state = {
+  priceUsd: null,
+  prevClose: null,
+  usdIdr: null,
+  alerts: JSON.parse(localStorage.getItem('gold_alerts') || '[]'),
+  chart: null,
+  chartRange: 7,
+  chartData: {},
+};
+
+// ─── FETCH: current gold price ───────────────────────────────────────────────
+async function fetchGoldPrice() {
+  const key = getApiKey();
+  if (!key) return null;
+
+  const url = `https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=XAU&to_currency=USD&apikey=${key}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (data['Realtime Currency Exchange Rate']) {
+    const info = data['Realtime Currency Exchange Rate'];
+    return {
+      price: parseFloat(info['5. Exchange Rate']),
+      bidPrice: parseFloat(info['8. Bid Price']),
+      askPrice: parseFloat(info['9. Ask Price']),
+    };
+  }
+  throw new Error(data['Note'] || data['Information'] || 'Gagal mengambil data harga');
+}
+
+// ─── FETCH: historical XAU/USD ───────────────────────────────────────────────
+async function fetchHistorical(range) {
+  if (state.chartData[range]) return state.chartData[range]; // cache
+
+  const key = getApiKey();
+  if (!key) return null;
+
+  const outputSize = range <= 30 ? 'compact' : 'full';
+  const url = `https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=XAU&to_symbol=USD&outputsize=${outputSize}&apikey=${key}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  const series = data['Time Series FX (Daily)'];
+  if (!series) throw new Error(data['Note'] || data['Information'] || 'Gagal mengambil histori');
+
+  const entries = Object.entries(series)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-range);
+
+  const labels = entries.map(([d]) => {
+    const dt = new Date(d);
+    return dt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  });
+  const prices = entries.map(([, v]) => parseFloat(v['4. close']));
+
+  // save prev close for change %
+  if (prices.length >= 2) state.prevClose = prices[prices.length - 2];
+
+  state.chartData[range] = { labels, prices };
+  return state.chartData[range];
+}
+
+// ─── FETCH: USD/IDR ──────────────────────────────────────────────────────────
+async function fetchUsdIdr() {
+  const res = await fetch('https://open.er-api.com/v6/latest/USD');
+  const data = await res.json();
+  if (data.rates && data.rates.IDR) return data.rates.IDR;
+  throw new Error('Gagal mengambil kurs IDR');
+}
+
+// ─── UPDATE UI ───────────────────────────────────────────────────────────────
+function fmtUsd(n) {
+  return '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtIdr(n) {
+  return 'Rp' + Math.round(n).toLocaleString('id-ID');
+}
+
+function updatePriceCards() {
+  const { priceUsd, prevClose, usdIdr } = state;
+  if (!priceUsd || !usdIdr) return;
+
+  const priceIdr = priceUsd * usdIdr;
+  const priceGramIdr = priceIdr / TROY_OZ_TO_GRAM;
+
+  document.getElementById('priceUsd').textContent = fmtUsd(priceUsd);
+  document.getElementById('priceIdr').textContent = fmtIdr(priceIdr);
+  document.getElementById('priceGramIdr').textContent = fmtIdr(priceGramIdr);
+  document.getElementById('usdIdr').textContent = fmtIdr(usdIdr);
+  document.getElementById('pricePerGram').textContent = `per troy ounce · Rp${Math.round(priceGramIdr).toLocaleString('id-ID')}/gram`;
+
+  // change badge
+  if (prevClose) {
+    const pct = ((priceUsd - prevClose) / prevClose * 100);
+    const abs = priceUsd - prevClose;
+    const dir = abs > 0 ? 'up' : abs < 0 ? 'down' : 'flat';
+    const arrow = dir === 'up' ? '▲' : dir === 'down' ? '▼' : '—';
+    document.getElementById('changeUsd').innerHTML =
+      `<span class="change-badge ${dir}">${arrow} ${fmtUsd(Math.abs(abs))} (${Math.abs(pct).toFixed(2)}%) dari kemarin</span>`;
+  }
+}
+
+function updateConverter() {
+  const { priceUsd, usdIdr } = state;
+  if (!priceUsd || !usdIdr) return;
+  runConverter();
+}
+
+function runConverter() {
+  const { priceUsd, usdIdr } = state;
+  if (!priceUsd || !usdIdr) return;
+
+  const amount = parseFloat(document.getElementById('convAmount').value) || 0;
+  const unit = document.getElementById('convUnit').value;
+
+  let grams;
+  if (unit === 'gram')      grams = amount;
+  else if (unit === 'oz')   grams = amount * TROY_OZ_TO_GRAM;
+  else if (unit === 'tola') grams = amount * 11.664;
+  else if (unit === 'kg')   grams = amount * 1000;
+
+  const oz = grams / TROY_OZ_TO_GRAM;
+  const usd = oz * priceUsd;
+  const idr = usd * usdIdr;
+
+  document.getElementById('resUsd').textContent = fmtUsd(usd);
+  document.getElementById('resIdr').textContent = fmtIdr(idr);
+}
+
+// ─── CHART ───────────────────────────────────────────────────────────────────
+function renderChart(labels, prices) {
+  const ctx = document.getElementById('goldChart').getContext('2d');
+
+  if (state.chart) state.chart.destroy();
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 280);
+  grad.addColorStop(0, 'rgba(245,200,66,0.25)');
+  grad.addColorStop(1, 'rgba(245,200,66,0)');
+
+  state.chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: prices,
+        borderColor: '#f5c842',
+        backgroundColor: grad,
+        borderWidth: 2,
+        fill: true,
+        tension: 0.35,
+        pointRadius: prices.length > 30 ? 0 : 3,
+        pointBackgroundColor: '#f5c842',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1e1e1e',
+          titleColor: '#888',
+          bodyColor: '#f5c842',
+          borderColor: '#2a2a2a',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => ' $' + ctx.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2 }),
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#666', maxTicksLimit: 8, font: { size: 11 } },
+          grid: { color: '#1e1e1e' },
+        },
+        y: {
+          ticks: {
+            color: '#666',
+            font: { size: 11 },
+            callback: v => '$' + v.toLocaleString('en-US'),
+          },
+          grid: { color: '#1e1e1e' },
+        }
+      }
+    }
+  });
+}
+
+async function loadChart(range) {
+  try {
+    const d = await fetchHistorical(range);
+    if (d) renderChart(d.labels, d.prices);
+  } catch (e) {
+    console.warn('Chart error:', e);
+  }
+}
+
+// tab clicks
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.chartRange = parseInt(btn.dataset.range);
+    await loadChart(state.chartRange);
+  });
+});
+
+// ─── ALERTS ──────────────────────────────────────────────────────────────────
+function saveAlerts() {
+  localStorage.setItem('gold_alerts', JSON.stringify(state.alerts));
+}
+
+function renderAlerts() {
+  const list = document.getElementById('alertList');
+  if (state.alerts.length === 0) {
+    list.innerHTML = '<div class="no-alerts">Belum ada alert. Tambahkan di atas.</div>';
+    return;
+  }
+  list.innerHTML = state.alerts.map((a, i) => `
+    <div class="alert-item">
+      <div class="alert-info">
+        <span class="alert-dir ${a.dir}">${a.dir === 'above' ? '↑ Naik ke' : '↓ Turun ke'}</span>
+        <strong>${fmtUsd(a.price)}</strong>
+      </div>
+      <button class="btn-del-alert" onclick="deleteAlert(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+async function addAlert() {
+  const price = parseFloat(document.getElementById('alertPrice').value);
+  const dir = document.getElementById('alertDir').value;
+  if (!price || price <= 0) { alert('Masukkan harga yang valid.'); return; }
+
+  // minta izin notifikasi
+  if (Notification.permission === 'default') {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      showBanner('warn', '⚠ Izin notifikasi ditolak. Alert tidak akan tampil.');
+    }
+  }
+
+  state.alerts.push({ price, dir, triggered: false });
+  saveAlerts();
+  renderAlerts();
+  document.getElementById('alertPrice').value = '';
+}
+
+function deleteAlert(i) {
+  state.alerts.splice(i, 1);
+  saveAlerts();
+  renderAlerts();
+}
+
+function checkAlerts(currentPrice) {
+  if (!currentPrice) return;
+  state.alerts.forEach((a, i) => {
+    if (a.triggered) return;
+    const hit = a.dir === 'above' ? currentPrice >= a.price : currentPrice <= a.price;
+    if (hit) {
+      a.triggered = true;
+      saveAlerts();
+      if (Notification.permission === 'granted') {
+        new Notification('🥇 GoldWatch Alert!', {
+          body: `Harga emas telah ${a.dir === 'above' ? 'naik ke' : 'turun ke'} ${fmtUsd(currentPrice)}`,
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🥇</text></svg>'
+        });
+      }
+    }
+  });
+}
+
+// ─── STATUS BANNER ───────────────────────────────────────────────────────────
+function showBanner(type, msg) {
+  const el = document.getElementById('statusBanner');
+  el.className = `status-banner ${type}`;
+  el.textContent = msg;
+}
+
+function hideBanner() {
+  document.getElementById('statusBanner').className = 'status-banner';
+}
+
+// ─── SETTINGS MODAL ──────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('apiKeyInput').value = getApiKey();
+  document.getElementById('settingsModal').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+
+function saveSettings() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) { alert('API key tidak boleh kosong.'); return; }
+  localStorage.setItem('av_api_key', key);
+  closeSettings();
+  state.chartData = {};
+  refresh();
+}
+
+document.getElementById('settingsModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeSettings();
+});
+
+// ─── MAIN REFRESH ────────────────────────────────────────────────────────────
+async function refresh() {
+  const btn = document.getElementById('btnRefresh');
+  btn.classList.add('loading');
+  btn.innerHTML = '<span class="spin">⟳</span> Memuat...';
+  hideBanner();
+
+  if (!getApiKey()) {
+    showBanner('warn', '⚠ API key belum diatur. Klik ⚙ untuk memasukkan API key Alpha Vantage gratis.');
+    btn.classList.remove('loading');
+    btn.textContent = '⟳ Perbarui';
+    return;
+  }
+
+  try {
+    const [goldData, idr] = await Promise.all([
+      fetchGoldPrice(),
+      fetchUsdIdr(),
+    ]);
+
+    if (goldData) state.priceUsd = goldData.price;
+    state.usdIdr = idr;
+
+    updatePriceCards();
+    updateConverter();
+    checkAlerts(state.priceUsd);
+
+    document.getElementById('lastUpdate').textContent =
+      'Diperbarui: ' + new Date().toLocaleTimeString('id-ID');
+
+    // load chart if not loaded
+    await loadChart(state.chartRange);
+
+  } catch (e) {
+    showBanner('error', '✕ Gagal memuat data: ' + e.message);
+    console.error(e);
+  }
+
+  btn.classList.remove('loading');
+  btn.textContent = '⟳ Perbarui';
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  renderAlerts();
+
+  if (!getApiKey()) {
+    showBanner('warn', '⚠ API key belum diatur. Klik ⚙ di kanan atas untuk memasukkan API key Alpha Vantage (gratis).');
+    return;
+  }
+
+  refresh();
+  setInterval(refresh, REFRESH_INTERVAL_MS);
+}
+
+init();
+</script>
+</body>
+</html>
