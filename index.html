@@ -567,15 +567,10 @@
 <!-- HEADER -->
 <header>
   <div class="logo">
-    <svg viewBox="0 0 48 28" fill="none" style="width:48px;height:28px">
-      <!-- Gold bar -->
-      <rect x="1" y="7" width="26" height="14" rx="3" fill="#f5c842" stroke="#d4a017" stroke-width="1.2"/>
-      <rect x="3.5" y="9.5" width="21" height="9" rx="2" fill="#ffd95a"/>
-      <text x="14" y="16" text-anchor="middle" fill="#7a3e00" font-size="5.5" font-weight="bold" font-family="serif">EMAS</text>
-      <!-- Indonesia flag -->
-      <rect x="30" y="6" width="17" height="8" rx="1.5" fill="#CE1126"/>
-      <rect x="30" y="14" width="17" height="8" rx="0" fill="#f8f8f8"/>
-      <rect x="30" y="6" width="17" height="16" rx="1.5" fill="none" stroke="#555" stroke-width="0.6"/>
+    <svg viewBox="0 0 28 20" fill="none" style="width:36px;height:26px">
+      <rect width="28" height="10" rx="2" fill="#CE1126"/>
+      <rect y="10" width="28" height="10" fill="#f8f8f8"/>
+      <rect width="28" height="20" rx="2" fill="none" stroke="#555" stroke-width="0.8"/>
     </svg>
     Gold Watch Indonesia
   </div>
@@ -736,28 +731,28 @@ const BRANDS = [
   {
     id: 'antam', name: 'Antam Logam Mulia', short: 'LM',
     desc: 'PT Aneka Tambang Tbk', url: 'https://www.logammulia.com',
-    color: '#1a56a0', logoUrl: 'https://www.logammulia.com/favicon.ico',
+    color: '#1a56a0', logoUrl: 'https://www.google.com/s2/favicons?domain=logammulia.com&sz=64',
     weights: [0.5, 1, 2, 5, 10, 25, 50, 100],
     premium: { 0.5:0.20, 1:0.11, 2:0.08, 5:0.055, 10:0.045, 25:0.03, 50:0.025, 100:0.02 },
   },
   {
     id: 'galeri24', name: 'Galeri 24', short: 'G24',
     desc: 'Jaringan resmi PT Antam', url: 'https://www.galeri24.co.id',
-    color: '#b8860b', logoUrl: 'https://www.galeri24.co.id/favicon.ico',
+    color: '#b8860b', logoUrl: 'https://www.google.com/s2/favicons?domain=galeri24.co.id&sz=64',
     weights: [1, 2, 5, 10, 25, 50, 100],
     premium: { 1:0.12, 2:0.09, 5:0.06, 10:0.05, 25:0.035, 50:0.03, 100:0.022 },
   },
   {
     id: 'ubs', name: 'UBS Gold', short: 'UBS',
     desc: 'PT Untung Bersama Sejahtera', url: 'https://www.ubsgold.co.id',
-    color: '#1a3a5c', logoUrl: 'https://www.ubsgold.co.id/favicon.ico',
+    color: '#1a3a5c', logoUrl: 'https://www.google.com/s2/favicons?domain=ubsgold.co.id&sz=64',
     weights: [1, 2, 5, 10, 25, 50, 100],
     premium: { 1:0.09, 2:0.065, 5:0.05, 10:0.04, 25:0.028, 50:0.022, 100:0.018 },
   },
   {
     id: 'hartadinata', name: 'Hartadinata Abadi', short: 'HD',
     desc: 'PT Hartadinata Abadi Tbk', url: 'https://www.hartadinata.com',
-    color: '#7b2d00', logoUrl: 'https://www.hartadinata.com/favicon.ico',
+    color: '#7b2d00', logoUrl: 'https://www.google.com/s2/favicons?domain=hartadinata.com&sz=64',
     weights: [1, 2, 5, 10, 25, 50, 100],
     premium: { 1:0.10, 2:0.07, 5:0.052, 10:0.042, 25:0.03, 50:0.024, 100:0.019 },
   },
@@ -870,7 +865,7 @@ function renderBrandCards(pricePerGramIdr) {
     const rows = brand.weights.map(w => {
       const prem = brand.premium[w] ?? 0.05;
       const total = pricePerGramIdr * w * (1 + prem);
-      const label = w < 1 ? `${w * 1000} mg` : `${w} gram`;
+      const label = w < 1 ? `${String(w).replace('.', ',')} gram` : `${w} gram`;
       return `<tr><td>${label}</td><td>${fmtIdr(total)}</td></tr>`;
     }).join('');
 
